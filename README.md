@@ -1,4 +1,4 @@
-##RSS aggregator
+## RSS aggregator
 
 Start [reading](https://frontend-project-11-omega-lake.vercel.app/) RSS.
 
