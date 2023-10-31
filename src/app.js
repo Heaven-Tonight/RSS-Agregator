@@ -3,8 +3,11 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.js';
 import * as yup from 'yup';
 import i18next from 'i18next';
+import axios from 'axios';
 import watch from './view.js';
 import resources from './locales/index.js';
+import parse from './parse.js';
+import buildFeedsData from './build.js';
 
 export default async () => {
   const state = {
@@ -12,9 +15,10 @@ export default async () => {
       valid: false,
       error: '',
       process: '',
-      data: '',
     },
-    feedsList: [],
+    feedsUrlList: [],
+    feedsChannelList: [],
+    feedsPostsList: [],
   };
 
   const defaultLanguage = 'ru';
@@ -46,7 +50,7 @@ export default async () => {
       });
 
       const schema = yup.object({
-        url: yup.string().url().notOneOf(watchedState.feedsList),
+        url: yup.string().url().notOneOf(watchedState.feedsUrlList),
       });
 
       watchedState.form.process = 'submitting';
@@ -58,7 +62,22 @@ export default async () => {
           watchedState.form.process = 'submitted';
           watchedState.form.valid = true;
           watchedState.form.error = '';
-          watchedState.feedsList.push(url);
+          watchedState.feedsUrlList.push(url);
+
+          const feedId = watchedState.feedsUrlList.length - 1;
+
+          axios
+            .get(`https://allorigins.hexlet.app/raw?url=${encodeURIComponent(url)}`)
+            .then(({ data }) => parse(data))
+            .then((parsed) => buildFeedsData(parsed, feedId))
+
+          // .catch((error) => ) реализовать логику в случае ошибки парсинга
+
+            .then(({ feed, posts }) => {
+              watchedState.feedsChannelList.push(feed);
+              watchedState.feedsPostsList.push(...posts);
+              watchedState.form.process = 'loaded';
+            });
         })
         .catch((error) => {
           watchedState.form.valid = false;
