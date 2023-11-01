@@ -1,5 +1,98 @@
 import onChange from 'on-change';
 
+const renderCard = (title, i18n) => {
+  const cardDiv = document.createElement('div');
+  cardDiv.classList.add('card', 'border-0');
+
+  const cardBodyDiv = document.createElement('div');
+  cardBodyDiv.classList.add('card-body');
+
+  const cardTitle = document.createElement('h2');
+  cardTitle.classList.add('card-title', 'h4');
+  cardTitle.textContent = i18n.t(title);
+
+  cardBodyDiv.append(cardTitle);
+  cardDiv.append(cardBodyDiv);
+
+  return cardDiv;
+};
+
+const renderFeedbackElement = (elements, i18n) => {
+  const feedbackElement = document.createElement('p');
+  feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-success');
+  feedbackElement.textContent = i18n.t('loading');
+  elements.div.append(feedbackElement);
+};
+
+const renderPostsList = (state, index) => {
+  const { feedsPostsList } = state;
+  const postsToRender = feedsPostsList.filter(({ feedId }) => feedId === index);
+
+  const ul = document.createElement('ul');
+  ul.classList.add('list-group', 'border-0', 'rounded-0');
+
+  const liElements = postsToRender.map(({ title, link, id }) => {
+    const li = document.createElement('li');
+    li.classList.add(
+      'list-group-item',
+      'd-flex',
+      'justify-content-between',
+      'align-items-start',
+      'border-0',
+      'border-end-0',
+    );
+
+    const a = document.createElement('a');
+    a.classList.add('fw-bold');
+    a.setAttribute('href', link);
+    a.setAttribute('id', id);
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener noreferrer');
+    a.textContent = title;
+
+    li.append(a);
+    return li;
+  });
+  ul.append(...liElements);
+  return ul;
+};
+
+const renderFeedsList = (state) => {
+  const { feedsChannelList } = state;
+
+  const ul = document.createElement('ul');
+  ul.classList.add('list-group', 'border-0', 'rounded-0');
+
+  const liElements = feedsChannelList.map((feed) => {
+    const { title, description } = feed;
+    const li = document.createElement('li');
+    li.classList.add('list-group-item', 'border-0', 'border-end-0');
+
+    const h3 = document.createElement('h3');
+    h3.classList.add('h6', 'm-0');
+    h3.textContent = title;
+
+    const p = document.createElement('p');
+    p.classList.add('m-0', 'small', 'text-black-50');
+    p.textContent = description;
+
+    li.append(h3, p);
+    return li;
+  });
+  ul.append(...liElements);
+  return ul;
+};
+
+const renderFeedsAndPostsLists = (state, elements, i18n) => {
+  const feedsCard = renderCard('feeds', i18n);
+  const postsCard = renderCard('posts', i18n);
+  const feedsList = renderFeedsList(state);
+  const postsList = state.feedsChannelList.map(({ id }) => renderPostsList(state, id));
+
+  elements.feedsDiv.replaceChildren(feedsCard, feedsList);
+  elements.postsDiv.replaceChildren(postsCard, ...postsList);
+};
+
 const renderElements = (elements, i18n) => {
   const h1 = document.createElement('h1');
   h1.classList.add('display-3', 'mb-0');
@@ -57,15 +150,23 @@ const renderElements = (elements, i18n) => {
   elements.div.append(h1, p, form, example);
 };
 
-const renderErrors = (state, elements, i18n) => {
+const renderFormErrors = (state, elements, i18n) => {
   const { error } = state.form;
   const input = document.querySelector('input');
+  const feedback = document.querySelector('.feedback');
   if (error) {
     input.classList.add('is-invalid');
-    const feedbackElement = document.createElement('p');
-    feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-danger');
-    feedbackElement.textContent = i18n.t(error.key);
-    elements.div.appendChild(feedbackElement);
+    if (!feedback) {
+      const feedbackElement = document.createElement('p');
+      feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-danger');
+      feedbackElement.textContent = i18n.t(error.key);
+      elements.div.appendChild(feedbackElement);
+    } else {
+      const newFeedbackElement = document.createElement('p');
+      newFeedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-danger');
+      newFeedbackElement.textContent = i18n.t(error.key);
+      feedback.replaceWith(newFeedbackElement);
+    }
   } else {
     input.classList.remove('is-invalid');
     const feedbackElement = document.querySelector('.feedback');
@@ -73,7 +174,61 @@ const renderErrors = (state, elements, i18n) => {
   }
 };
 
-const renderForm = (state, elements, i18n) => {
+const renderErrors = (state) => {
+  const { error } = state;
+  const { name, message, code } = error;
+
+  const errorDiv = document.createElement('div');
+  errorDiv.classList.add('justify-content-start', 'p-5', 'column');
+
+  const errorCode = document.createElement('h5');
+  errorCode.classList.add('text-danger');
+  errorCode.textContent = `Request failed with ${name}:`;
+
+  const p1Err = document.createElement('p');
+  p1Err.classList.add('text-white', 'pt-3', 'mb-0');
+  p1Err.textContent = code;
+
+  const p2Err = document.createElement('p');
+  p2Err.classList.add('text-white', 'mt-0');
+  p2Err.textContent = message;
+
+  errorDiv.append(errorCode, p1Err, p2Err);
+
+  const pDiv = document.createElement('div');
+  pDiv.classList.add(
+    'd-flex',
+    'align-items-center',
+    'justify-content-start',
+    'flex-column',
+  );
+
+  const div = document.createElement('div');
+  div.classList.add(
+    'd-flex',
+    'bg-dark',
+    'flex-grow-1',
+    'row',
+  );
+
+  const p1 = document.createElement('h3');
+  p1.classList.add('text-white', 'fw-bold');
+  p1.textContent = 'Что-то пошло не так...';
+
+  const p2 = document.createElement('h3');
+  p2.classList.add('text-white', 'fw-bold');
+  p2.textContent = 'Попробуйте перезагрузить страницу.';
+
+  pDiv.append(p1, p2);
+
+  const body = document.querySelector('body');
+  body.innerHTML = '';
+
+  div.append(errorDiv, pDiv);
+  body.append(div);
+};
+
+const render = (state, elements, i18n) => {
   const { process } = state.form;
   switch (process) {
     case 'filling':
@@ -82,6 +237,10 @@ const renderForm = (state, elements, i18n) => {
     case 'submitted':
       document.querySelector('form').reset();
       break;
+    case 'loaded':
+      renderFeedsAndPostsLists(state, elements, i18n);
+      renderFeedbackElement(elements, i18n);
+      break;
     default: break;
   }
 };
@@ -89,10 +248,13 @@ const renderForm = (state, elements, i18n) => {
 const watch = (state, elements, i18n) => onChange(state, (path) => {
   switch (path) {
     case 'form.error':
-      renderErrors(state, elements, i18n);
+      renderFormErrors(state, elements, i18n);
+      break;
+    case 'error':
+      renderErrors(state, i18n);
       break;
     case 'form.process':
-      renderForm(state, elements, i18n);
+      render(state, elements, i18n);
       break;
     default: break;
   }
