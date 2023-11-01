@@ -1,4 +1,8 @@
 export default (html, feedId) => {
+  const parserError = html.querySelector('parsererror');
+  if (parserError) {
+    throw new Error('failing');
+  }
   const posts = [];
   const feed = {
     title: html.querySelector('title').textContent,
