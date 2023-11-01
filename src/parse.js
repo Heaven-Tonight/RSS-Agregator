@@ -1,5 +1,5 @@
-export default (rssXMLData) => {
+export default (data) => {
   const domParser = new DOMParser();
-  const html = domParser.parseFromString(rssXMLData, 'text/html');
-  return html;
+  const result = domParser.parseFromString(data, 'application/xml');
+  return result;
 };
