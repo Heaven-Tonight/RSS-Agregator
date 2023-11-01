@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.js';
 import * as yup from 'yup';
 import i18next from 'i18next';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import watch from './view.js';
 import resources from './locales/index.js';
 import parse from './parse.js';
@@ -19,6 +19,7 @@ export default async () => {
     feedsUrlList: [],
     feedsChannelList: [],
     feedsPostsList: [],
+    error: '',
   };
 
   const defaultLanguage = 'ru';
@@ -30,6 +31,8 @@ export default async () => {
   }).then(() => {
     const elements = {
       div: document.querySelector('.col-md-10'),
+      postsDiv: document.querySelector('.posts'),
+      feedsDiv: document.querySelector('.feeds'),
     };
 
     const watchedState = watch(state, elements, i18n);
@@ -70,13 +73,17 @@ export default async () => {
             .get(`https://allorigins.hexlet.app/raw?url=${encodeURIComponent(url)}`)
             .then(({ data }) => parse(data))
             .then((parsed) => buildFeedsData(parsed, feedId))
-
-          // .catch((error) => ) реализовать логику в случае ошибки парсинга
-
             .then(({ feed, posts }) => {
               watchedState.feedsChannelList.push(feed);
               watchedState.feedsPostsList.push(...posts);
               watchedState.form.process = 'loaded';
+            })
+            .catch((err) => {
+              if (err instanceof AxiosError) {
+                watchedState.error = err;
+              }
+              watchedState.feedsUrlList.pop();
+              watchedState.form.error = { key: err.message };
             });
         })
         .catch((error) => {
