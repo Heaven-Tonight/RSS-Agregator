@@ -3,11 +3,12 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.js';
 import * as yup from 'yup';
 import i18next from 'i18next';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import watch from './view.js';
 import resources from './locales/index.js';
 import parse from './parse.js';
 import buildFeedsData from './build.js';
+import updateRssStream from './update.js';
 
 export default async () => {
   const state = {
@@ -19,7 +20,6 @@ export default async () => {
     feedsUrlList: [],
     feedsChannelList: [],
     feedsPostsList: [],
-    error: '',
   };
 
   const defaultLanguage = 'ru';
@@ -56,7 +56,7 @@ export default async () => {
         url: yup.string().url().notOneOf(watchedState.feedsUrlList),
       });
 
-      watchedState.form.process = 'submitting';
+      // watchedState.form.process = 'submitting';
       const formData = new FormData(e.target);
       const rss = formData.get('url');
 
@@ -68,6 +68,7 @@ export default async () => {
           watchedState.feedsUrlList.push(url);
 
           const feedId = watchedState.feedsUrlList.length - 1;
+          watchedState.form.process = 'loading';
 
           axios
             .get(`https://allorigins.hexlet.app/raw?url=${encodeURIComponent(url)}`)
@@ -77,18 +78,20 @@ export default async () => {
               watchedState.feedsChannelList.push(feed);
               watchedState.feedsPostsList.push(...posts);
               watchedState.form.process = 'loaded';
+              setTimeout(() => updateRssStream(watchedState), 5000);
             })
             .catch((err) => {
-              if (err instanceof AxiosError) {
-                watchedState.error = err;
-              }
               watchedState.feedsUrlList.pop();
-              watchedState.form.error = { key: err.message };
+              if (err.message === 'failing') {
+                watchedState.form.error = { key: err.message };
+              }
+              watchedState.form.error = { key: 'errors.networkError' };
             });
         })
         .catch((error) => {
           watchedState.form.valid = false;
           watchedState.form.error = error.message;
+          watchedState.form.process = 'failed';
         });
     };
     form.addEventListener('submit', onSubmitHandler);
