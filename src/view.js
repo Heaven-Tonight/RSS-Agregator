@@ -17,13 +17,6 @@ const renderCard = (title, i18n) => {
   return cardDiv;
 };
 
-const renderFeedbackElement = (elements, i18n) => {
-  const feedbackElement = document.createElement('p');
-  feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-success');
-  feedbackElement.textContent = i18n.t('loading');
-  elements.div.append(feedbackElement);
-};
-
 const renderPostsList = (state, index) => {
   const { feedsPostsList } = state;
   const postsToRender = feedsPostsList.filter(({ feedId }) => feedId === index);
@@ -150,28 +143,51 @@ const renderElements = (elements, i18n) => {
   elements.div.append(h1, p, form, example);
 };
 
+const renderErrorFeedBackElement = (state, elements, i18n) => {
+  const { error } = state.form;
+
+  const currentFeedBackElement = document.querySelector('.feedback');
+
+  const feedbackElement = document.createElement('p');
+  feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-danger');
+  feedbackElement.textContent = i18n.t(error.key);
+
+  if (currentFeedBackElement) {
+    currentFeedBackElement.replaceWith(feedbackElement);
+  }
+
+  elements.div.appendChild(feedbackElement);
+};
+
 const renderFormErrors = (state, elements, i18n) => {
   const { error } = state.form;
   const input = document.querySelector('input');
-  const feedback = document.querySelector('.feedback');
+
   if (error) {
-    input.classList.add('is-invalid');
-    if (!feedback) {
-      const feedbackElement = document.createElement('p');
-      feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-danger');
-      feedbackElement.textContent = i18n.t(error.key);
-      elements.div.appendChild(feedbackElement);
+    if (error.key === 'failing') {
+      renderErrorFeedBackElement(state, elements, i18n);
     } else {
-      const newFeedbackElement = document.createElement('p');
-      newFeedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-danger');
-      newFeedbackElement.textContent = i18n.t(error.key);
-      feedback.replaceWith(newFeedbackElement);
+      input.classList.add('is-invalid');
+      renderErrorFeedBackElement(state, elements, i18n);
     }
   } else {
     input.classList.remove('is-invalid');
     const feedbackElement = document.querySelector('.feedback');
     feedbackElement.remove();
   }
+};
+
+const renderSuccessFeedbackElement = (elements, i18n) => {
+  const currentFeedbackElement = document.querySelector('.feedback');
+
+  const feedbackElement = document.createElement('p');
+  feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-success');
+  feedbackElement.textContent = i18n.t('loading');
+
+  if (currentFeedbackElement) {
+    currentFeedbackElement.replaceWith(feedbackElement);
+  }
+  elements.div.append(feedbackElement);
 };
 
 const renderErrors = (state) => {
@@ -228,6 +244,14 @@ const renderErrors = (state) => {
   body.append(div);
 };
 
+const deleteFeedbackElement = () => {
+  const feedback = document.querySelector('.feedback');
+
+  if (feedback) {
+    feedback.remove();
+  }
+};
+
 const render = (state, elements, i18n) => {
   const { process } = state.form;
   switch (process) {
@@ -237,15 +261,20 @@ const render = (state, elements, i18n) => {
     case 'submitted':
       document.querySelector('form').reset();
       break;
+    case 'loading':
+      deleteFeedbackElement();
+      break;
     case 'loaded':
       renderFeedsAndPostsLists(state, elements, i18n);
-      renderFeedbackElement(elements, i18n);
+      renderSuccessFeedbackElement(elements, i18n);
       break;
     default: break;
   }
 };
 
 const watch = (state, elements, i18n) => onChange(state, (path) => {
+  // console.log(state.form.process);
+  // console.log(state.feedsPostsList);
   switch (path) {
     case 'form.error':
       renderFormErrors(state, elements, i18n);
