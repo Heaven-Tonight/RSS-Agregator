@@ -3,8 +3,9 @@ import parse from './parse.js';
 import buildFeedsData from './build.js';
 
 const updateRssStream = (watchedState) => {
+  console.log('START UPDATING');
+  watchedState.process = 'updating';
   const { feedsUrlList, feedsPostsList } = watchedState;
-  watchedState.form.process = 'updating';
   feedsUrlList.forEach((url, feedId) => {
     axios
       .get(`https://allorigins.hexlet.app/raw?disableCache=true&url=${encodeURIComponent(url)}`)
@@ -14,14 +15,16 @@ const updateRssStream = (watchedState) => {
         const { id } = feed;
         // eslint-disable-next-line
         const filteredLoadedPosts = feedsPostsList.filter(({ feedId }) => feedId === id);
+        const titles = filteredLoadedPosts.map(({ title }) => title);
         const newPosts = posts
-          .filter(({ title }, i) => filteredLoadedPosts[i].title !== title);
-        if (newPosts.length === 0) {
-          return;
-        }
+          .filter(({ title }) => !titles.includes(title));
         watchedState.feedsPostsList.push(...newPosts);
-        watchedState.form.process = 'loaded';
-        setTimeout(() => updateRssStream(watchedState), 5000);
+        watchedState.process = 'updated';
+      })
+      .catch((err) => {
+        if (err) {
+          feedsUrlList.filter((currentUrl) => currentUrl !== url);
+        }
       });
   });
 };
