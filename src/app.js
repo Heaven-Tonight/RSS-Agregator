@@ -20,6 +20,7 @@ export default async () => {
     feedsUrlList: [],
     feedsChannelList: [],
     feedsPostsList: [],
+    process: '',
   };
 
   const defaultLanguage = 'ru';
@@ -56,7 +57,8 @@ export default async () => {
         url: yup.string().url().notOneOf(watchedState.feedsUrlList),
       });
 
-      // watchedState.form.process = 'submitting';
+      // стейт формы, пригодится для реализации блокировки поля и кнопки во время валидации запроса
+      watchedState.form.process = 'submitting';
       const formData = new FormData(e.target);
       const rss = formData.get('url');
 
@@ -68,17 +70,17 @@ export default async () => {
           watchedState.feedsUrlList.push(url);
 
           const feedId = watchedState.feedsUrlList.length - 1;
-          watchedState.form.process = 'loading';
+          watchedState.process = 'loading';
 
           axios
             .get(`https://allorigins.hexlet.app/raw?url=${encodeURIComponent(url)}`)
             .then(({ data }) => parse(data))
             .then((parsed) => buildFeedsData(parsed, feedId))
             .then(({ feed, posts }) => {
-              watchedState.feedsChannelList.push(feed);
+              watchedState.feedsChannelList = [feed, ...watchedState.feedsChannelList];
               watchedState.feedsPostsList.push(...posts);
-              watchedState.form.process = 'loaded';
-              setTimeout(() => updateRssStream(watchedState), 5000);
+              watchedState.process = 'loaded';
+              updateRssStream(watchedState);
             })
             .catch((err) => {
               watchedState.feedsUrlList.pop();
@@ -94,6 +96,14 @@ export default async () => {
           watchedState.form.process = 'failed';
         });
     };
+    // eslint-disable-next-line
+    let timerID = setTimeout(function request() {
+      // console.log(watchedState.process)
+      if (watchedState.process === 'updated') {
+        updateRssStream(watchedState);
+      }
+      timerID = setTimeout(request, 5000);
+    }, 5000);
     form.addEventListener('submit', onSubmitHandler);
   });
 };
