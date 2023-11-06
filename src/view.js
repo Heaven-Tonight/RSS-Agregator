@@ -190,60 +190,6 @@ const renderSuccessFeedbackElement = (elements, i18n) => {
   elements.div.append(feedbackElement);
 };
 
-const renderErrors = (state) => {
-  const { error } = state;
-  const { name, message, code } = error;
-
-  const errorDiv = document.createElement('div');
-  errorDiv.classList.add('justify-content-start', 'p-5', 'column');
-
-  const errorCode = document.createElement('h5');
-  errorCode.classList.add('text-danger');
-  errorCode.textContent = `Request failed with ${name}:`;
-
-  const p1Err = document.createElement('p');
-  p1Err.classList.add('text-white', 'pt-3', 'mb-0');
-  p1Err.textContent = code;
-
-  const p2Err = document.createElement('p');
-  p2Err.classList.add('text-white', 'mt-0');
-  p2Err.textContent = message;
-
-  errorDiv.append(errorCode, p1Err, p2Err);
-
-  const pDiv = document.createElement('div');
-  pDiv.classList.add(
-    'd-flex',
-    'align-items-center',
-    'justify-content-start',
-    'flex-column',
-  );
-
-  const div = document.createElement('div');
-  div.classList.add(
-    'd-flex',
-    'bg-dark',
-    'flex-grow-1',
-    'row',
-  );
-
-  const p1 = document.createElement('h3');
-  p1.classList.add('text-white', 'fw-bold');
-  p1.textContent = 'Что-то пошло не так...';
-
-  const p2 = document.createElement('h3');
-  p2.classList.add('text-white', 'fw-bold');
-  p2.textContent = 'Попробуйте перезагрузить страницу.';
-
-  pDiv.append(p1, p2);
-
-  const body = document.querySelector('body');
-  body.innerHTML = '';
-
-  div.append(errorDiv, pDiv);
-  body.append(div);
-};
-
 const deleteFeedbackElement = () => {
   const feedback = document.querySelector('.feedback');
 
@@ -252,7 +198,24 @@ const deleteFeedbackElement = () => {
   }
 };
 
-const render = (state, elements, i18n) => {
+const renderData = (state, elements, i18n) => {
+  const { process } = state;
+  switch (process) {
+    case 'loading':
+      deleteFeedbackElement();
+      break;
+    case 'loaded':
+      renderFeedsAndPostsLists(state, elements, i18n);
+      renderSuccessFeedbackElement(elements, i18n);
+      break;
+    case 'updated':
+      renderFeedsAndPostsLists(state, elements, i18n);
+      break;
+    default: break;
+  }
+};
+
+const renderForm = (state, elements, i18n) => {
   const { process } = state.form;
   switch (process) {
     case 'filling':
@@ -261,29 +224,22 @@ const render = (state, elements, i18n) => {
     case 'submitted':
       document.querySelector('form').reset();
       break;
-    case 'loading':
-      deleteFeedbackElement();
-      break;
-    case 'loaded':
-      renderFeedsAndPostsLists(state, elements, i18n);
-      renderSuccessFeedbackElement(elements, i18n);
-      break;
     default: break;
   }
 };
 
 const watch = (state, elements, i18n) => onChange(state, (path) => {
-  // console.log(state.form.process);
+  // console.log(state.process);
   // console.log(state.feedsPostsList);
   switch (path) {
     case 'form.error':
       renderFormErrors(state, elements, i18n);
       break;
-    case 'error':
-      renderErrors(state, i18n);
-      break;
     case 'form.process':
-      render(state, elements, i18n);
+      renderForm(state, elements, i18n);
+      break;
+    case 'process':
+      renderData(state, elements, i18n);
       break;
     default: break;
   }
