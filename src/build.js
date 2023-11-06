@@ -15,10 +15,11 @@ export default (html, feedId) => {
     posts.push({
       title: item.querySelector('title').textContent,
       description: item.querySelector('description').textContent,
-      link: item.querySelector('link').nextSibling.textContent.trim(),
+      link: item.querySelector('link').textContent,
       id: index,
       feedId: feed.id,
     });
   });
+
   return { feed, posts };
 };
