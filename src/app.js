@@ -6,9 +6,7 @@ import i18next from 'i18next';
 import axios from 'axios';
 import watch from './view.js';
 import resources from './locales/index.js';
-import parse from './parse.js';
-import buildFeedsData from './build.js';
-import updateRssStream from './update.js';
+import helpers from './helpers/index.js';
 
 export default async () => {
   const state = {
@@ -17,13 +15,31 @@ export default async () => {
       error: '',
       process: '',
     },
-    feedsUrlList: [],
-    feedsChannelList: [],
-    feedsPostsList: [],
-    process: '',
+    feeds: {
+      urlList: [],
+      channelList: [],
+      postsList: [],
+      process: '',
+    },
+    uiState: {
+      selectedPostsIds: [],
+      selectedPosts: [],
+      selectedPostId: null,
+      modal: {
+        modalVisibility: false,
+        // а нужен ли этот стейт?
+        linkClicked: false,
+      },
+    },
   };
 
   const defaultLanguage = 'ru';
+  const {
+    parse,
+    buildFeedsData,
+    updateRssStream,
+    startPostsUpdatingTimer,
+  } = helpers;
 
   const i18n = i18next.createInstance();
   i18n.init({
@@ -34,6 +50,13 @@ export default async () => {
       div: document.querySelector('.col-md-10'),
       postsDiv: document.querySelector('.posts'),
       feedsDiv: document.querySelector('.feeds'),
+      rootDiv: document.querySelector('.flex-grow-1'),
+      modal: document.querySelector('.modal'),
+      modalHeader: document.querySelector('.modal-header'),
+      modalBody: document.querySelector('.modal-body'),
+      modalHeaderBtnClose: document.querySelector('.modal-header button'),
+      modalFooterLink: document.querySelector('.modal-footer a'),
+      modalFooterBtnClose: document.querySelector('.modal-footer button'),
     };
 
     const watchedState = watch(state, elements, i18n);
@@ -54,10 +77,9 @@ export default async () => {
       });
 
       const schema = yup.object({
-        url: yup.string().url().notOneOf(watchedState.feedsUrlList),
+        url: yup.string().url().notOneOf(watchedState.feeds.urlList),
       });
 
-      // стейт формы, пригодится для реализации блокировки поля и кнопки во время валидации запроса
       watchedState.form.process = 'submitting';
       const formData = new FormData(e.target);
       const rss = formData.get('url');
@@ -67,27 +89,29 @@ export default async () => {
           watchedState.form.process = 'submitted';
           watchedState.form.valid = true;
           watchedState.form.error = '';
-          watchedState.feedsUrlList.push(url);
+          watchedState.feeds.urlList.push(url);
 
-          const feedId = watchedState.feedsUrlList.length - 1;
-          watchedState.process = 'loading';
+          const feedId = watchedState.feeds.urlList.length - 1;
+          watchedState.feeds.process = 'loading';
 
           axios
             .get(`https://allorigins.hexlet.app/raw?url=${encodeURIComponent(url)}`)
             .then(({ data }) => parse(data))
             .then((parsed) => buildFeedsData(parsed, feedId))
             .then(({ feed, posts }) => {
-              watchedState.feedsChannelList = [feed, ...watchedState.feedsChannelList];
-              watchedState.feedsPostsList.push(...posts);
-              watchedState.process = 'loaded';
+              watchedState.feeds.channelList = [feed, ...watchedState.feeds.channelList];
+              watchedState.feeds.postsList.push(...posts);
+              watchedState.feeds.process = 'loaded';
               updateRssStream(watchedState);
             })
             .catch((err) => {
-              watchedState.feedsUrlList.pop();
-              if (err.message === 'failing') {
-                watchedState.form.error = { key: err.message };
+              // console.log(err)
+              watchedState.feeds.urlList.pop();
+              if (err.message === 'invalid RSS') {
+                watchedState.form.error = { key: 'errors.rssError' };
+              } else {
+                watchedState.form.error = { key: 'errors.networkError' };
               }
-              watchedState.form.error = { key: 'errors.networkError' };
             });
         })
         .catch((error) => {
@@ -96,14 +120,7 @@ export default async () => {
           watchedState.form.process = 'failed';
         });
     };
-    // eslint-disable-next-line
-    let timerID = setTimeout(function request() {
-      // console.log(watchedState.process)
-      if (watchedState.process === 'updated') {
-        updateRssStream(watchedState);
-      }
-      timerID = setTimeout(request, 5000);
-    }, 5000);
+    startPostsUpdatingTimer(watchedState);
     form.addEventListener('submit', onSubmitHandler);
   });
 };

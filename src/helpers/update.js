@@ -3,10 +3,10 @@ import parse from './parse.js';
 import buildFeedsData from './build.js';
 
 const updateRssStream = (watchedState) => {
-  console.log('START UPDATING');
-  watchedState.process = 'updating';
-  const { feedsUrlList, feedsPostsList } = watchedState;
-  feedsUrlList.forEach((url, feedId) => {
+  // console.log('START UPDATING');
+  watchedState.feeds.process = 'updating';
+  const { urlList, postsList } = watchedState.feeds;
+  urlList.forEach((url, feedId) => {
     axios
       .get(`https://allorigins.hexlet.app/raw?disableCache=true&url=${encodeURIComponent(url)}`)
       .then(({ data }) => parse(data))
@@ -14,16 +14,16 @@ const updateRssStream = (watchedState) => {
       .then(({ posts, feed }) => {
         const { id } = feed;
         // eslint-disable-next-line
-        const filteredLoadedPosts = feedsPostsList.filter(({ feedId }) => feedId === id);
+        const filteredLoadedPosts = postsList.filter(({ feedId }) => feedId === id);
         const titles = filteredLoadedPosts.map(({ title }) => title);
         const newPosts = posts
           .filter(({ title }) => !titles.includes(title));
-        watchedState.feedsPostsList.push(...newPosts);
-        watchedState.process = 'updated';
+        watchedState.feeds.postsList.push(...newPosts);
+        watchedState.feeds.process = 'updated';
       })
       .catch((err) => {
         if (err) {
-          feedsUrlList.filter((currentUrl) => currentUrl !== url);
+          urlList.filter((currentUrl) => currentUrl !== url);
         }
       });
   });
