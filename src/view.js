@@ -6,6 +6,9 @@ import {
   renderFeedsAndPostsLists,
   renderSuccessFeedbackElement,
   deleteFeedbackElement,
+  renderModal,
+  disableFormButton,
+  enableFormButton,
 } from './renders/render.js';
 
 const renderForm = (state, elements, i18n) => {
@@ -15,14 +18,14 @@ const renderForm = (state, elements, i18n) => {
       renderFormElements(elements, i18n);
       break;
     case 'submitting':
-      document.querySelector('form button').setAttribute('disabled', true);
+      disableFormButton();
       break;
     case 'submitted':
-      document.querySelector('form button').removeAttribute('disabled');
+      enableFormButton();
       document.querySelector('form').reset();
       break;
     case 'failed':
-      document.querySelector('form button').removeAttribute('disabled');
+      enableFormButton();
       break;
     default: break;
   }
@@ -32,9 +35,11 @@ const renderFeeds = (state, elements, i18n) => {
   const { process } = state.feeds;
   switch (process) {
     case 'loading':
+      disableFormButton();
       deleteFeedbackElement();
       break;
     case 'loaded':
+      enableFormButton();
       renderFeedsAndPostsLists(state, elements, i18n);
       renderSuccessFeedbackElement(elements, i18n);
       break;
@@ -49,12 +54,19 @@ const watch = (state, elements, i18n) => onChange(state, (path) => {
   switch (path) {
     case 'form.error':
       renderFormErrors(state, elements, i18n);
+      enableFormButton();
       break;
     case 'form.process':
       renderForm(state, elements, i18n);
       break;
     case 'feeds.process':
       renderFeeds(state, elements, i18n);
+      break;
+    case 'uiState.selectedPostsIds':
+      renderFeedsAndPostsLists(state, elements, i18n);
+      break;
+    case 'uiState.modal.modalVisibility':
+      renderModal(state, elements);
       break;
     default: break;
   }

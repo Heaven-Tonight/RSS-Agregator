@@ -62,7 +62,33 @@ export default async () => {
     const watchedState = watch(state, elements, i18n);
     watchedState.form.process = 'filling';
 
-    const form = document.querySelector('.rss-form');
+    const toggle = () => {
+      const { modalVisibility } = watchedState.uiState.modal;
+      watchedState.uiState.modal.modalVisibility = !modalVisibility;
+    };
+
+    const addPostId = (postId) => {
+      if (!watchedState.uiState.selectedPostsIds.includes(postId)) {
+        watchedState.uiState.selectedPostsIds.push(postId);
+      }
+    };
+
+    const onPostClickHandler = (e) => {
+      const { bsToggle } = e.target.dataset;
+      if (bsToggle) {
+        const { id } = e.target.dataset;
+        watchedState.uiState.selectedPostId = id;
+        toggle();
+        addPostId(id);
+      } else {
+        const { id } = e.target;
+        addPostId(id);
+      }
+    };
+
+    const onCloseBtnClickHandler = () => {
+      toggle();
+    };
 
     const onSubmitHandler = async (e) => {
       e.preventDefault();
@@ -105,7 +131,6 @@ export default async () => {
               updateRssStream(watchedState);
             })
             .catch((err) => {
-              // console.log(err)
               watchedState.feeds.urlList.pop();
               if (err.message === 'invalid RSS') {
                 watchedState.form.error = { key: 'errors.rssError' };
@@ -120,7 +145,16 @@ export default async () => {
           watchedState.form.process = 'failed';
         });
     };
+
     startPostsUpdatingTimer(watchedState);
+
+    const form = document.querySelector('.rss-form');
+    const { modalFooterBtnClose, modalHeaderBtnClose, postsDiv } = elements;
+
     form.addEventListener('submit', onSubmitHandler);
+    postsDiv.addEventListener('click', onPostClickHandler);
+    [modalFooterBtnClose, modalHeaderBtnClose].forEach((btn) => {
+      btn.addEventListener('click', onCloseBtnClickHandler);
+    });
   });
 };

@@ -3,7 +3,6 @@ import parse from './parse.js';
 import buildFeedsData from './build.js';
 
 const updateRssStream = (watchedState) => {
-  // console.log('START UPDATING');
   watchedState.feeds.process = 'updating';
   const { urlList, postsList } = watchedState.feeds;
   urlList.forEach((url, feedId) => {
@@ -14,8 +13,8 @@ const updateRssStream = (watchedState) => {
       .then(({ posts, feed }) => {
         const { id } = feed;
         // eslint-disable-next-line
-        const filteredLoadedPosts = postsList.filter(({ feedId }) => feedId === id);
-        const titles = filteredLoadedPosts.map(({ title }) => title);
+        const filteredLoadedPostsByFeedId = postsList.filter(({ feedId }) => feedId === id);
+        const titles = filteredLoadedPostsByFeedId.map(({ title }) => title);
         const newPosts = posts
           .filter(({ title }) => !titles.includes(title));
         watchedState.feeds.postsList.push(...newPosts);

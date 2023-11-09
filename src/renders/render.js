@@ -55,6 +55,16 @@ export const renderFormElements = (elements, i18n) => {
   elements.div.append(h1, p, form, example);
 };
 
+export const disableFormButton = () => {
+  const formButton = document.querySelector('form button');
+  formButton.setAttribute('disabled', true);
+};
+
+export const enableFormButton = () => {
+  const formButton = document.querySelector('form button');
+  formButton.removeAttribute('disabled');
+};
+
 export const renderSuccessFeedbackElement = (elements, i18n) => {
   const currentFeedbackElement = document.querySelector('.feedback');
 
@@ -141,27 +151,7 @@ export const showModal = (state, elements) => {
 
 export const renderModal = (state, elements) => {
   const { modalVisibility } = state.uiState.modal;
-  if (modalVisibility) {
-    showModal(state, elements);
-
-    const { modalHeaderBtnClose, modalFooterLink, modalFooterBtnClose } = elements;
-
-    [modalHeaderBtnClose, modalFooterBtnClose].forEach((button) => {
-      button.addEventListener('click', () => {
-        // eslint-disable-next-line
-        state.uiState.modal.modalVisibility = false;
-        renderModal(state, elements);
-      });
-    });
-
-    modalFooterLink.addEventListener('click', () => {
-      // eslint-disable-next-line
-      state.uiState.modal.linkClicked = true;
-      renderModal(state, elements);
-    });
-  } else {
-    hideModal(elements);
-  }
+  return modalVisibility ? showModal(state, elements) : hideModal(elements);
 };
 
 export const renderPostsList = (state, elements, currentFeedId, i18n) => {
@@ -192,16 +182,6 @@ export const renderPostsList = (state, elements, currentFeedId, i18n) => {
     a.setAttribute('rel', 'noopener noreferrer');
     a.textContent = title;
 
-    a.addEventListener('click', (e) => {
-      // eslint-disable-next-line
-      const { id } = e.target;
-      if (!state.uiState.selectedPostsIds.includes(id)) {
-        state.uiState.selectedPostsIds.push(id);
-        // eslint-disable-next-line
-        renderFeedsAndPostsLists(state, elements, i18n);
-      }
-    });
-
     const button = document.createElement('button');
     button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
     button.setAttribute('type', 'button');
@@ -209,22 +189,6 @@ export const renderPostsList = (state, elements, currentFeedId, i18n) => {
     button.dataset.bsToggle = 'modal';
     button.dataset.bsTarget = '#modal';
     button.textContent = i18n.t('buttons.viewBtn');
-
-    button.addEventListener('click', (e) => {
-      // eslint-disable-next-line
-      const { id } = e.target.dataset;
-      // eslint-disable-next-line
-      state.uiState.selectedPostId = id;
-      if (!state.uiState.selectedPostsIds.includes(id)) {
-        state.uiState.selectedPostsIds.push(id);
-        renderModal(state, elements);
-      }
-      // eslint-disable-next-line
-      state.uiState.modal.modalVisibility = true;
-      // eslint-disable-next-line
-      renderFeedsAndPostsLists(state, elements, i18n);
-      renderModal(state, elements);
-    });
 
     li.append(a, button);
     return li;
