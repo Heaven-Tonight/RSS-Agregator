@@ -27,8 +27,6 @@ export default async () => {
       selectedPostId: null,
       modal: {
         modalVisibility: false,
-        // а нужен ли этот стейт?
-        linkClicked: false,
       },
     },
   };

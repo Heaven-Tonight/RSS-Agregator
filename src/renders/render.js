@@ -145,8 +145,6 @@ export const showModal = (state, elements) => {
   h5.textContent = selectedPost.title;
 
   modalFooterLink.setAttribute('href', selectedPost.link);
-  // eslint-disable-next-line
-  // state.uiState.modal.linkClicked ? modalFooterLink.classList.add('active') : modalFooterLink.classList.remove('active');
 };
 
 export const renderModal = (state, elements) => {
