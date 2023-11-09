@@ -72,7 +72,7 @@ export const enableFormButton = () => {
 
 export const renderSuccessFeedbackElement = (elements, i18n) => {
   const currentFeedbackElement = document.querySelector('.feedback');
-  currentFeedbackElement.classList.replace('text-danger','text-success');
+  currentFeedbackElement.classList.replace('text-danger', 'text-success');
   currentFeedbackElement.textContent = i18n.t('processes.loaded');
 };
 
