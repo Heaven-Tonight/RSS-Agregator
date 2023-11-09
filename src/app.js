@@ -120,7 +120,7 @@ export default async () => {
           watchedState.feeds.process = 'loading';
 
           axios
-            .get(`https://allorigins.hexlet.app/raw?disableCache=true&url=${encodeURIComponent(url)}`)
+            .get(`https://allorigins.hexlet.app/raw?disableCache=true&url=${url}`)
             .then(({ data }) => parse(data))
             .then((parsed) => buildFeedsData(parsed, feedId))
             .then(({ feed, posts }) => {
