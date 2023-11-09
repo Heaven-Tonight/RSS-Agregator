@@ -42,6 +42,8 @@ export const renderFormElements = (elements, i18n) => {
 
   const button = document.createElement('button');
   button.classList.add('btn', 'btn-lg', 'btn-primary', 'h-100', 'px-sm-5');
+  button.setAttribute('type', 'submit');
+  button.setAttribute('aria-label', 'add');
   button.textContent = i18n.t('buttons.submitBtn');
 
   buttonDiv.append(button);
