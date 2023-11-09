@@ -54,7 +54,10 @@ export const renderFormElements = (elements, i18n) => {
   example.classList.add('mt-2', 'mb-0', 'muted');
   example.textContent = i18n.t('elements.example');
 
-  elements.div.append(h1, p, form, example);
+  const feedback = document.createElement('p');
+  feedback.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-danger');
+
+  elements.div.append(h1, p, form, example, feedback);
 };
 
 export const disableFormButton = () => {
@@ -69,22 +72,14 @@ export const enableFormButton = () => {
 
 export const renderSuccessFeedbackElement = (elements, i18n) => {
   const currentFeedbackElement = document.querySelector('.feedback');
-
-  const feedbackElement = document.createElement('p');
-  feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-success');
-  feedbackElement.textContent = i18n.t('processes.loaded');
-
-  if (currentFeedbackElement) {
-    currentFeedbackElement.replaceWith(feedbackElement);
-  }
-  elements.div.append(feedbackElement);
+  currentFeedbackElement.classList.replace('text-danger','text-success');
+  currentFeedbackElement.textContent = i18n.t('processes.loaded');
 };
 
 export const deleteFeedbackElement = () => {
   const feedback = document.querySelector('.feedback');
-
   if (feedback) {
-    feedback.remove();
+    feedback.textContent = '';
   }
 };
 
@@ -92,15 +87,8 @@ const renderErrorFeedBackElement = (state, elements, i18n) => {
   const { error } = state.form;
 
   const currentFeedBackElement = document.querySelector('.feedback');
-
-  const feedbackElement = document.createElement('p');
-  feedbackElement.classList.add('feedback', 'm0', 'position-absolute', 'small', 'text-danger');
-  feedbackElement.textContent = i18n.t(error.key);
-
-  if (currentFeedBackElement) {
-    currentFeedBackElement.replaceWith(feedbackElement);
-  }
-  elements.div.appendChild(feedbackElement);
+  currentFeedBackElement.classList.add('text-danger');
+  currentFeedBackElement.textContent = i18n.t(error.key);
 };
 
 export const renderFormErrors = (state, elements, i18n) => {
@@ -116,8 +104,6 @@ export const renderFormErrors = (state, elements, i18n) => {
     }
   } else {
     input.classList.remove('is-invalid');
-    const feedbackElement = document.querySelector('.feedback');
-    feedbackElement.remove();
   }
 };
 
