@@ -1,6 +1,6 @@
 const parse = (data) => {
   const domParser = new DOMParser();
-  const result = domParser.parseFromString(data, 'application/xml');
+  const result = domParser.parseFromString(data.contents, 'application/xml');
   return result;
 };
 
