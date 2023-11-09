@@ -107,7 +107,6 @@ export default async () => {
       watchedState.form.process = 'submitting';
       const formData = new FormData(e.target);
       const rss = formData.get('url');
-      console.log('RSS', rss)
 
       schema.validate({ url: rss }, { abortEarly: false })
         .then(({ url }) => {
@@ -120,7 +119,7 @@ export default async () => {
           watchedState.feeds.process = 'loading';
 
           axios
-            .get(` https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
+            .get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
             .then(({ data }) => parse(data))
             .then((parsed) => buildFeedsData(parsed, feedId))
             .then(({ feed, posts }) => {
@@ -130,7 +129,6 @@ export default async () => {
               updateRssStream(watchedState);
             })
             .catch((err) => {
-              console.log('ERROR', err)
               watchedState.feeds.urlList.pop();
               if (err.message === 'invalid RSS') {
                 watchedState.form.error = { key: 'errors.rssError' };

@@ -7,7 +7,7 @@ const updateRssStream = (watchedState) => {
   const { urlList, postsList } = watchedState.feeds;
   urlList.forEach((url, feedId) => {
     axios
-      .get(`https://allorigins.hexlet.app/raw?disableCache=true&url=${encodeURIComponent(url)}`)
+      .get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
       .then(({ data }) => parse(data))
       .then((parsed) => buildFeedsData(parsed, feedId))
       .then(({ posts, feed }) => {

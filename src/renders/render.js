@@ -211,7 +211,7 @@ export const renderFeedsList = (state) => {
 
 export const renderFeedsAndPostsLists = (state, elements, i18n) => {
   // eslint-disable-next-line
-  const renderCard = (title, i18n) => {
+  const viewCard = (title, i18n) => {
     const cardDiv = document.createElement('div');
     cardDiv.classList.add('card', 'border-0');
 
@@ -228,8 +228,10 @@ export const renderFeedsAndPostsLists = (state, elements, i18n) => {
     return cardDiv;
   };
 
-  const feedsCard = renderCard('elements.feeds', i18n);
-  const postsCard = renderCard('elements.posts', i18n);
+  // eslint-disable-next-line
+  const feedsCard = viewCard('elements.feeds', i18n);
+  const postsCard = viewCard('elements.posts', i18n);
+  // eslint-disable-next-line
   const feedsList = renderFeedsList(state);
   const postsList = state.feeds.channelList
     .map(({ id }) => renderPostsList(state, elements, id, i18n));
