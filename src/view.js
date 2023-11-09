@@ -39,6 +39,7 @@ const renderFeeds = (state, elements, i18n) => {
       deleteFeedbackElement();
       break;
     case 'loaded':
+      document.querySelector('form').reset();
       enableFormButton();
       renderFeedsAndPostsLists(state, elements, i18n);
       renderSuccessFeedbackElement(elements, i18n);
