@@ -1,4 +1,4 @@
-import updateRssStream from './update.js';
+import updateRssStream from './updateRssStream.js';
 
 const startPostsUpdatingTimer = (watchedState) => {
   // eslint-disable-next-line
