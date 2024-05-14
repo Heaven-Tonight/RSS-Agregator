@@ -109,11 +109,11 @@ const renderPostsList = (state, elements, currentFeedId, i18n) => {
       ],
     });
 
-    const aClasses = uiState.selectedPostsIds.includes(id) ? ['fw-normal', 'link-secondary'] : ['fw-bold'];
+    const postLinkClasses = uiState.selectedPostsIds.includes(id) ? ['fw-normal', 'link-secondary'] : ['fw-bold'];
 
     const postLink = createElement('a', {
       textContent: title,
-      classList: aClasses,
+      classList: postLinkClasses,
       attributeList: [
         ['href', link],
         ['id', id],
@@ -211,6 +211,11 @@ const showModal = (state, elements) => {
   modalFooterLink.setAttribute('href', selectedPost.link);
 };
 
+const resetForm = () => {
+  document.querySelector('form').reset();
+  document.querySelector('input').focus();
+};
+
 const disableFormButton = () => {
   const formButton = document.querySelector('form button');
   formButton.setAttribute('disabled', 'true');
@@ -252,7 +257,7 @@ export const renderForm = (state, elements, i18n) => {
       break;
     case 'submitted':
       enableFormButton();
-      document.querySelector('form').reset();
+      resetForm();
       break;
     case 'failed':
       enableFormButton();
@@ -263,7 +268,7 @@ export const renderForm = (state, elements, i18n) => {
 
 export const renderFeedsAndPostsLists = (state, elements, i18n) => {
   // eslint-disable-next-line
-  const renderCard = (title, i18n) => {
+  const createCard = (title, i18n) => {
     const card = createElement('div', {
       classList: ['card', 'border-0'],
     });
@@ -284,8 +289,8 @@ export const renderFeedsAndPostsLists = (state, elements, i18n) => {
   };
 
   // eslint-disable-next-line
-  const feedCard = renderCard('elements.feeds', i18n);
-  const postCard = renderCard('elements.posts', i18n);
+  const feedCard = createCard('elements.feeds', i18n);
+  const postCard = createCard('elements.posts', i18n);
   // eslint-disable-next-line
   const feedsList = renderFeedsList(state);
   const postsList = state.feeds.channelList
@@ -303,7 +308,7 @@ export const render = (state, elements, i18n) => {
       deleteFeedbackElement();
       break;
     case 'loaded':
-      document.querySelector('form').reset();
+      resetForm();
       enableFormButton();
       renderFeedsAndPostsLists(state, elements, i18n);
       renderSuccessFeedbackElement(elements, i18n);

@@ -1,6 +1,5 @@
 import * as yup from 'yup';
 
-import updateRssStream from '../helpers/updateRssStream.js';
 import loadAndBuildFeedsData from '../helpers/loadAndBuildFeedsData.js';
 import startPostsUpdatingTimer from '../helpers/startPostsUpdatingTimer.js';
 
@@ -50,9 +49,9 @@ export const onSubmitHandler = (watchedState) => async (e) => {
       watchedState.form.process = 'submitted';
       watchedState.form.valid = true;
       watchedState.form.error = '';
-      watchedState.feeds.urlList.push(url);
+      const updatedUrlListLength = watchedState.feeds.urlList.push(url);
 
-      const feedId = watchedState.feeds.urlList.length - 1;
+      const feedId = updatedUrlListLength - 1;
       watchedState.feeds.process = 'loading';
 
       loadAndBuildFeedsData(url, feedId)
@@ -60,7 +59,6 @@ export const onSubmitHandler = (watchedState) => async (e) => {
           watchedState.feeds.channelList = [feed, ...watchedState.feeds.channelList];
           watchedState.feeds.postsList.push(...posts);
           watchedState.feeds.process = 'loaded';
-          updateRssStream(watchedState);
         })
         .catch((err) => {
           watchedState.feeds.urlList.pop();
