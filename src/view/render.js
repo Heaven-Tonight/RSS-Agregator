@@ -227,7 +227,6 @@ export const renderModal = (state, elements, i18n) => {
   const { selectedPostId } = state.uiState;
   const { postsList } = state.feeds;
   const {
-    modal,
     modalBody,
     modalTitle,
     modalFooterLink,
@@ -235,9 +234,6 @@ export const renderModal = (state, elements, i18n) => {
   } = elements;
 
   const selectedPost = postsList.find(({ id }) => id === selectedPostId);
-
-  modal.classList.add('show');
-  modal.setAttribute('style', 'display: block');
 
   modalBody.textContent = selectedPost.description;
   modalTitle.textContent = selectedPost.title;
