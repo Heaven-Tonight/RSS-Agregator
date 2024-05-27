@@ -6,7 +6,7 @@
         <title>RSS Aggregator</title>
     </head>
     <body class="d-flex flex-column min-vh-100" style>
-    <div class="modal fade" id = "modal" tabindex="-1" role="dialog" aria-labelledby="modal" aria-hidden="true">
+    <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modal" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -15,12 +15,8 @@
                 </div>
                 <div class="modal-body text-break"></div>
                 <div class="modal-footer">
-                    <a href="#" class="btn btn-primary full-article" role="button" target="_blank" rel="noopener noreferrer">
-                        Читать полностью
-                    </a>
-                    <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">
-                        Закрыть
-                    </button>
+                    <a href="#" class="btn btn-primary full-article" role="button" target="_blank" rel="noopener noreferrer"></a>
+                    <button class="btn btn-secondary" type="button" data-bs-dismiss="modal"></button>
                 </div>
             </div>
         </div>
@@ -29,6 +25,7 @@
         <section class="container-fluid bg-dark p-5">
             <div class="row">
                 <div class="col-md-10 form-wrapper col-lg-8 mx-auto text-white">
+                    <form action class="rss-form text-body"></form>
                 </div>
             </div>
         </section>

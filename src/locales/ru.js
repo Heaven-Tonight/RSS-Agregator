@@ -11,6 +11,8 @@ export default {
     buttons: {
       submitBtn: 'Добавить',
       viewBtn: 'Просмотр',
+      readBtn: 'Читать полностью',
+      closeBtn: 'Закрыть',
     },
     processes: {
       loaded: 'RSS успешно загружен',

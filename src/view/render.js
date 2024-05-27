@@ -23,71 +23,6 @@ const createElement = (tagName, options = {}) => {
   return element;
 };
 
-const renderFormElements = (elements, i18n) => {
-  const head = createElement('h1', {
-    textContent: i18n.t('elements.head'),
-    classList: ['display-3', 'mb-0'],
-  });
-
-  const tagLine = createElement('p', {
-    textContent: i18n.t('elements.tagline'),
-    classList: ['lead'],
-  });
-
-  const form = createElement('form', {
-    classList: ['rss-form', 'text-body'],
-    attributeList: [['action', '']],
-  });
-
-  const row = createElement('div', { classList: ['row'] });
-  const col = createElement('div', { classList: ['col'] });
-  const div = createElement('div', { classList: ['form-floating'] });
-
-  const input = createElement('input', {
-    classList: ['form-control', 'w-100'],
-    attributeList: [
-      ['id', 'url-input'],
-      ['autofocus', ''],
-      ['required', ''],
-      ['name', 'url'],
-      ['aria-label', 'url'],
-      ['placeholder', i18n.t('input')],
-      ['autocomplete', 'off'],
-    ],
-  });
-
-  const label = createElement('label', {
-    textContent: i18n.t('elements.input'),
-    attributeList: [['for', 'url-input']],
-  });
-
-  div.append(input, label);
-  col.append(div);
-
-  const buttonCol = createElement('div', { classList: ['col-auto'] });
-
-  const button = createElement('button', {
-    textContent: i18n.t('buttons.submitBtn'),
-    classList: ['btn', 'btn-lg', 'btn-primary', 'h-100', 'px-sm-5'],
-    attributeList: [['type', 'submit'], ['aria-label', 'add']],
-  });
-
-  buttonCol.append(button);
-  row.append(col, buttonCol);
-  form.append(row);
-
-  const example = createElement('p', {
-    textContent: i18n.t('elements.example'),
-    classList: ['mt-2', 'mb-0', 'muted'],
-  });
-
-  const feedback = createElement('p', {
-    classList: ['feedback', 'm0', 'position-absolute', 'small', 'text-danger'],
-  });
-
-  elements.formDiv.append(head, tagLine, form, example, feedback);
-};
-
 const renderPostsList = (state, elements, currentFeedId, i18n) => {
   const { uiState } = state;
   const { postsList } = state.feeds;
@@ -185,48 +120,94 @@ const deleteFeedbackElement = () => {
   }
 };
 
-const hideModal = (elements) => {
-  const { modal } = elements;
-  modal.classList.replace('show', 'fade');
-  modal.removeAttribute('style');
-};
+const disableForm = () => {
+  const input = document.querySelector('form input');
+  input.setAttribute('readonly', 'true');
 
-const showModal = (state, elements) => {
-  const { selectedPostId } = state.uiState;
-  const { postsList } = state.feeds;
-  const {
-    modal,
-    modalBody,
-    modalTitle,
-    modalFooterLink,
-  } = elements;
-
-  const selectedPost = postsList.find(({ id }) => id === selectedPostId);
-
-  modal.classList.replace('fade', 'show');
-  modal.setAttribute('style', 'display: block');
-
-  modalBody.textContent = selectedPost.description;
-  modalTitle.textContent = selectedPost.title;
-  modalFooterLink.setAttribute('href', selectedPost.link);
-};
-
-const resetForm = () => {
-  document.querySelector('form').reset();
-  document.querySelector('input').focus();
-};
-
-const disableFormButton = () => {
   const formButton = document.querySelector('form button');
   formButton.setAttribute('disabled', 'true');
 };
+const enableForm = () => {
+  const input = document.querySelector('form input');
+  input.removeAttribute('readonly');
 
-export const enableFormButton = () => {
   const formButton = document.querySelector('form button');
   formButton.removeAttribute('disabled');
 };
 
+const resetForm = () => {
+  enableForm();
+  document.querySelector('form').reset();
+  document.querySelector('input').focus();
+};
+
+export const renderFormElements = (elements, i18n) => {
+  const head = createElement('h1', {
+    textContent: i18n.t('elements.head'),
+    classList: ['display-3', 'mb-0'],
+  });
+
+  const tagLine = createElement('p', {
+    textContent: i18n.t('elements.tagline'),
+    classList: ['lead'],
+  });
+
+  const row = createElement('div', { classList: ['row'] });
+  const col = createElement('div', { classList: ['col'] });
+  const div = createElement('div', { classList: ['form-floating'] });
+
+  const input = createElement('input', {
+    classList: ['form-control', 'w-100'],
+    attributeList: [
+      ['id', 'url-input'],
+      ['autofocus', ''],
+      ['required', ''],
+      ['name', 'url'],
+      ['aria-label', 'url'],
+      ['placeholder', i18n.t('input')],
+      ['autocomplete', 'off'],
+    ],
+  });
+
+  const label = createElement('label', {
+    textContent: i18n.t('elements.input'),
+    attributeList: [['for', 'url-input']],
+  });
+
+  div.append(input, label);
+  col.append(div);
+
+  const buttonCol = createElement('div', { classList: ['col-auto'] });
+
+  const button = createElement('button', {
+    textContent: i18n.t('buttons.submitBtn'),
+    classList: ['btn', 'btn-lg', 'btn-primary', 'h-100', 'px-sm-5'],
+    attributeList: [['type', 'submit'], ['aria-label', 'add']],
+  });
+
+  const { form, formDiv } = elements;
+
+  buttonCol.append(button);
+  row.append(col, buttonCol);
+  form.append(row);
+
+  const example = createElement('p', {
+    textContent: i18n.t('elements.example'),
+    classList: ['mt-2', 'mb-0', 'muted'],
+  });
+
+  const feedback = createElement('p', {
+    classList: ['feedback', 'm0', 'position-absolute', 'small', 'text-danger'],
+  });
+
+  formDiv.insertBefore(head, form);
+  formDiv.insertBefore(tagLine, form);
+
+  formDiv.insertBefore(example, form.nextSibling);
+  formDiv.insertBefore(feedback, example.nextSibling);
+};
 export const renderFormErrors = (state, elements, i18n) => {
+  enableForm();
   const { error } = state.form;
   const input = document.querySelector('input');
 
@@ -241,29 +222,30 @@ export const renderFormErrors = (state, elements, i18n) => {
     input.classList.remove('is-invalid');
   }
 };
-export const renderModal = (state, elements) => {
-  const { modalVisibility } = state.uiState.modal;
-  return modalVisibility ? showModal(state, elements) : hideModal(elements);
-};
 
-export const renderForm = (state, elements, i18n) => {
-  const { process } = state.form;
-  switch (process) {
-    case 'filling':
-      renderFormElements(elements, i18n);
-      break;
-    case 'submitting':
-      disableFormButton();
-      break;
-    case 'submitted':
-      enableFormButton();
-      resetForm();
-      break;
-    case 'failed':
-      enableFormButton();
-      break;
-    default: break;
-  }
+export const renderModal = (state, elements, i18n) => {
+  const { selectedPostId } = state.uiState;
+  const { postsList } = state.feeds;
+  const {
+    modal,
+    modalBody,
+    modalTitle,
+    modalFooterLink,
+    modalCloseButton,
+  } = elements;
+
+  const selectedPost = postsList.find(({ id }) => id === selectedPostId);
+
+  modal.classList.replace('fade', 'show');
+  modal.setAttribute('style', 'display: block');
+
+  modalBody.textContent = selectedPost.description;
+  modalTitle.textContent = selectedPost.title;
+
+  modalCloseButton.textContent = i18n.t('buttons.closeBtn');
+
+  modalFooterLink.textContent = i18n.t('buttons.readBtn');
+  modalFooterLink.setAttribute('href', selectedPost.link);
 };
 
 export const renderFeedsAndPostsLists = (state, elements, i18n) => {
@@ -304,12 +286,11 @@ export const render = (state, elements, i18n) => {
   const { process } = state.feeds;
   switch (process) {
     case 'loading':
-      disableFormButton();
+      disableForm();
       deleteFeedbackElement();
       break;
     case 'loaded':
       resetForm();
-      enableFormButton();
       renderFeedsAndPostsLists(state, elements, i18n);
       renderSuccessFeedbackElement(elements, i18n);
       break;
