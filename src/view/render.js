@@ -236,7 +236,7 @@ export const renderModal = (state, elements, i18n) => {
 
   const selectedPost = postsList.find(({ id }) => id === selectedPostId);
 
-  modal.classList.replace('fade', 'show');
+  modal.classList.add('show');
   modal.setAttribute('style', 'display: block');
 
   modalBody.textContent = selectedPost.description;
