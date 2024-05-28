@@ -13,3 +13,17 @@ Allows you to add an unlimited number of RSS feeds, automatically updates feeds 
 It's a convenient way to read your favourite news, blogs, articles and quickly receive updates.
 
 Start [reading](https://frontend-project-11-omega-lake.vercel.app/) RSS.
+
+---
+
+## Installation
+
+Clone the project using the web URL: 
+
+```git clone https://github.com/Heaven-Tonight/RSS-Agregator.git```
+
+
+1. Run ```npm install``` to install dependencies.
+
+
+2. Run ```npm run serve``` to start the project.
