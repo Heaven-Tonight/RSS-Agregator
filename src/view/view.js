@@ -1,22 +1,24 @@
 import onChange from 'on-change';
 
 import {
-  render,
-  renderFormErrors,
-  renderFeedsAndPostsLists,
+  renderFormState,
+  renderFeeds,
   renderModal,
-} from './render.js';
+} from './domUtils.js';
 
 const watch = (state, elements, i18n) => onChange(state, (path) => {
+  const { process } = state.feeds;
   switch (path) {
-    case 'form.error':
-      renderFormErrors(state, elements, i18n);
+    case 'form.process':
+      renderFormState(state, elements, i18n);
       break;
     case 'feeds.process':
-      render(state, elements, i18n);
+      if (process === 'loaded' || process === 'updated') {
+        renderFeeds(state, elements, i18n);
+      }
       break;
-    case 'uiState.selectedPostsIds':
-      renderFeedsAndPostsLists(state, elements, i18n);
+    case 'uiState.viewedPostsIds':
+      renderFeeds(state, elements, i18n);
       break;
     case 'uiState.selectedPostId':
       renderModal(state, elements, i18n);

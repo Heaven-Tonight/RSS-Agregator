@@ -24,6 +24,7 @@ export default {
       },
       rssError: 'Ресурс не содержит валидный RSS',
       networkError: 'Ошибка сети',
+      unknownError: 'Неизвестная ошибка',
     },
   },
 };

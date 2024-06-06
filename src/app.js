@@ -1,11 +1,10 @@
 import i18next from 'i18next';
-
 import * as yup from 'yup';
+import axios from 'axios';
+import { uniqueId } from 'lodash';
 
 import watch from './view/view.js';
 import resources from './locales/index.js';
-import updateFeedsState from './helpers/updateFeedsState.js';
-import { renderFormElements } from './view/render.js';
 
 const elements = {
   formDiv: document.querySelector('.form-wrapper'),
@@ -21,61 +20,164 @@ const elements = {
 
 const defaultLanguage = 'ru';
 
+let timerID;
+
+const parseXML = (data) => {
+  const domParser = new DOMParser();
+  const dom = domParser.parseFromString(data.contents, 'application/xml');
+
+  const parserError = dom.querySelector('parsererror');
+
+  if (parserError) {
+    throw new Error('invalid RSS');
+  }
+
+  const getTextContent = (element, selector) => element.querySelector(selector).textContent;
+
+  const feed = {
+    title: getTextContent(dom, 'title'),
+    description: getTextContent(dom, 'description'),
+  };
+
+  const posts = Array.from(dom.querySelectorAll('item')).map((item) => ({
+    title: getTextContent(item, 'title'),
+    description: getTextContent(item, 'description'),
+    link: getTextContent(item, 'link'),
+  }));
+
+  return { feed, posts };
+};
+
+const loadFeedsData = (url, feedId) => axios
+  .get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
+  .then(({ data }) => {
+    const { feed, posts } = parseXML(data);
+    feed.id = feedId;
+
+    const postsWithIds = posts.map((post) => ({
+      ...post,
+      id: uniqueId(),
+      feedId,
+    }));
+    return { feed, posts: postsWithIds };
+  })
+  .catch((error) => {
+    throw error;
+  });
+
+const updateFeedsState = (watchedState, url, feedId) => {
+  watchedState.feeds.process = 'loading';
+  watchedState.form.process = 'submitting';
+
+  return loadFeedsData(url, feedId)
+    .then(({ feed, posts }) => {
+      // eslint-disable-next-line no-param-reassign
+      feed.url = url;
+      watchedState.feeds.channelList = [feed, ...watchedState.feeds.channelList];
+      watchedState.feeds.postsList.push(...posts);
+      watchedState.feeds.process = 'loaded';
+      watchedState.form.process = 'submitted';
+    })
+    .catch((err) => {
+      if (err.isAxiosError) {
+        watchedState.form.error = { key: 'errors.networkError' };
+      } else if (err.message === 'invalid RSS') {
+        watchedState.form.error = { key: 'errors.rssError' };
+      } else {
+        watchedState.form.error = { key: 'errors.unknownError' };
+      }
+      watchedState.form.process = 'failed';
+    });
+};
+
+const startPostsUpdatingTimer = (watchedState, interval = 5000) => {
+  const updatePosts = () => {
+    watchedState.feeds.process = 'updating';
+    const { channelList, postsList } = watchedState.feeds;
+
+    const promises = channelList.map(({ url, id }) => loadFeedsData(url, id)
+      .then(({ posts, feed }) => {
+        const currentTitles = postsList
+          .filter((post) => post.feedId === feed.id)
+          .map(({ title }) => title);
+        const newPosts = posts
+          .filter(({ title }) => !currentTitles.includes(title));
+        watchedState.feeds.postsList.push(...newPosts);
+        watchedState.feeds.process = 'updated';
+      })
+      .catch((e) => {
+        console.error(e);
+      }));
+
+    Promise.all(promises).finally(() => {
+      timerID = setTimeout(updatePosts, interval);
+    });
+  };
+
+  if (timerID) {
+    clearTimeout(timerID);
+  }
+
+  timerID = setTimeout(updatePosts, interval);
+};
+
 const onClickHandler = (watchedState) => (e) => {
   const { id, dataset } = e.target;
   const { bsToggle, id: postId } = dataset;
 
   const selectedPostId = bsToggle ? postId : id;
 
-  if (!watchedState.uiState.selectedPostsIds.includes(selectedPostId)) {
-    watchedState.uiState.selectedPostsIds.push(selectedPostId);
+  if (!watchedState.uiState.viewedPostsIds.includes(selectedPostId)) {
+    watchedState.uiState.viewedPostsIds.push(selectedPostId);
   }
 
   if (bsToggle) {
     watchedState.uiState.selectedPostId = selectedPostId;
   }
 };
+
 const onSubmitHandler = (watchedState) => (e) => {
   e.preventDefault();
 
+  watchedState.form.process = 'submitting';
+  watchedState.form.error = '';
+
   const schema = yup.object({
-    url: yup.string().url().notOneOf(watchedState.feeds.urlList),
+    url: yup.string().url().notOneOf(watchedState.feeds.channelList.map((feed) => feed.url)),
   });
 
-  const rss = new FormData(e.target).get('url');
+  const url = new FormData(e.target).get('url');
 
-  schema.validate({ url: rss }, { abortEarly: false })
+  schema.validate({ url }, { abortEarly: false })
+    // eslint-disable-next-line no-shadow
     .then(({ url }) => {
-      const feedId = watchedState.feeds.urlList.length;
-      watchedState.feeds.process = 'loading';
+      const feedId = watchedState.feeds.channelList.length;
 
-      updateFeedsState(watchedState, url, feedId);
-
-      watchedState.form.valid = true;
-      watchedState.form.error = '';
+      updateFeedsState(watchedState, url, feedId).then(() => {
+        if (watchedState.feeds.process !== 'loading' && watchedState.feeds.process !== 'updating') {
+          startPostsUpdatingTimer(watchedState, 5000);
+        }
+      });
     })
     .catch((error) => {
-      console.log(error);
-      watchedState.form.valid = false;
       watchedState.form.error = error.message;
+      watchedState.form.process = 'failed';
     });
 };
 
 export default async () => {
   const state = {
     form: {
-      valid: false,
       error: '',
+      process: '',
     },
     feeds: {
-      urlList: [],
       channelList: [],
       postsList: [],
       process: '',
-      timer: '',
     },
     uiState: {
-      selectedPostsIds: [],
+      viewedPostsIds: [],
       selectedPostId: null,
     },
   };
@@ -96,11 +198,11 @@ export default async () => {
     resources,
   }).then(() => {
     const watchedState = watch(state, elements, i18n);
+    watchedState.form.process = 'initial';
 
     const { postsDiv, form } = elements;
 
     form.addEventListener('submit', onSubmitHandler(watchedState));
     postsDiv.addEventListener('click', onClickHandler(watchedState));
   });
-  renderFormElements(elements, i18n);
 };

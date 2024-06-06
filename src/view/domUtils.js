@@ -23,110 +23,19 @@ const createElement = (tagName, options = {}) => {
   return element;
 };
 
-const renderPostsList = (state, elements, currentFeedId, i18n) => {
-  const { uiState } = state;
-  const { postsList } = state.feeds;
-  const postsToRender = postsList.filter(({ feedId }) => feedId === currentFeedId);
-
-  const ul = createElement('ul', {
-    classList: ['list-group', 'border-0', 'rounded-0'],
-  });
-
-  const posts = postsToRender.map(({ title, link, id }) => {
-    const li = createElement('li', {
-      classList: [
-        'list-group-item',
-        'd-flex',
-        'justify-content-between',
-        'align-items-start',
-        'border-0',
-        'border-end-0',
-      ],
-    });
-
-    const postLinkClasses = uiState.selectedPostsIds.includes(id) ? ['fw-normal', 'link-secondary'] : ['fw-bold'];
-
-    const postLink = createElement('a', {
-      textContent: title,
-      classList: postLinkClasses,
-      attributeList: [
-        ['href', link],
-        ['id', id],
-        ['target', '_blank'],
-        ['rel', 'noopener noreferrer'],
-      ],
-    });
-
-    const postButton = createElement('button', {
-      textContent: i18n.t('buttons.viewBtn'),
-      classList: ['btn', 'btn-outline-primary', 'btn-sm'],
-      attributeList: [['type', 'button']],
-      dataSetList: [['id', id], ['bsToggle', 'modal'], ['bsTarget', '#modal']],
-    });
-
-    li.append(postLink, postButton);
-    return li;
-  });
-  ul.append(...posts);
-  return ul;
-};
-
-const renderFeedsList = (state) => {
-  const { channelList } = state.feeds;
-
-  const ul = createElement('ul', {
-    classList: ['list-group', 'border-0', 'rounded-0'],
-  });
-
-  const feeds = channelList.map(({ title, description }) => {
-    const li = createElement('li', {
-      classList: ['list-group-item', 'border-0', 'border-end-0'],
-    });
-
-    const feedTitle = createElement('h3', {
-      textContent: title,
-      classList: ['h6', 'm-0'],
-    });
-
-    const feedDescription = createElement('p', {
-      textContent: description,
-      classList: ['m-0', 'small', 'text-black-50'],
-    });
-
-    li.append(feedTitle, feedDescription);
-    return li;
-  });
-  ul.append(...feeds);
-  return ul;
-};
-
-const renderSuccessFeedbackElement = (elements, i18n) => {
-  const currentFeedbackElement = document.querySelector('.feedback');
-  currentFeedbackElement.classList.replace('text-danger', 'text-success');
-  currentFeedbackElement.textContent = i18n.t('processes.loaded');
-};
-
-const renderErrorFeedBackElement = (state, elements, i18n) => {
-  const { error } = state.form;
-
-  const currentFeedBackElement = document.querySelector('.feedback');
-  currentFeedBackElement.classList.add('text-danger');
-  currentFeedBackElement.textContent = i18n.t(error.key);
-};
-const deleteFeedbackElement = () => {
-  const feedback = document.querySelector('.feedback');
-  if (feedback) {
-    feedback.textContent = '';
-  }
-};
-
 const disableForm = () => {
   const input = document.querySelector('form input');
   input.setAttribute('readonly', 'true');
 
   const formButton = document.querySelector('form button');
   formButton.setAttribute('disabled', 'true');
+
+  const feedback = document.querySelector('.feedback');
+  if (feedback) {
+    feedback.textContent = '';
+  }
 };
+
 const enableForm = () => {
   const input = document.querySelector('form input');
   input.removeAttribute('readonly');
@@ -135,13 +44,19 @@ const enableForm = () => {
   formButton.removeAttribute('disabled');
 };
 
-const resetForm = () => {
+const resetForm = (i18n) => {
   enableForm();
+  const input = document.querySelector('input');
   document.querySelector('form').reset();
-  document.querySelector('input').focus();
+  input.classList.remove('is-invalid');
+  input.focus();
+
+  const currentFeedbackElement = document.querySelector('.feedback');
+  currentFeedbackElement.classList.replace('text-danger', 'text-success');
+  currentFeedbackElement.textContent = i18n.t('processes.loaded');
 };
 
-export const renderFormElements = (elements, i18n) => {
+const renderFormElements = (elements, i18n) => {
   const head = createElement('h1', {
     textContent: i18n.t('elements.head'),
     classList: ['display-3', 'mb-0'],
@@ -206,21 +121,20 @@ export const renderFormElements = (elements, i18n) => {
   formDiv.insertBefore(example, form.nextSibling);
   formDiv.insertBefore(feedback, example.nextSibling);
 };
-export const renderFormErrors = (state, elements, i18n) => {
+const renderFormErrors = (state, elements, i18n) => {
   enableForm();
   const { error } = state.form;
+
   const input = document.querySelector('input');
 
-  if (error) {
-    if (error.key !== 'errors.rssError') {
-      input.classList.add('is-invalid');
-    } else {
-      input.classList.remove('is-invalid');
-    }
-    renderErrorFeedBackElement(state, elements, i18n);
+  if (error.key !== 'errors.rssError') {
+    input.classList.add('is-invalid');
   } else {
     input.classList.remove('is-invalid');
   }
+  const currentFeedBackElement = document.querySelector('.feedback');
+  currentFeedBackElement.classList.add('text-danger');
+  currentFeedBackElement.textContent = i18n.t(error.key);
 };
 
 export const renderModal = (state, elements, i18n) => {
@@ -244,9 +158,11 @@ export const renderModal = (state, elements, i18n) => {
   modalFooterLink.setAttribute('href', selectedPost.link);
 };
 
-export const renderFeedsAndPostsLists = (state, elements, i18n) => {
-  // eslint-disable-next-line
-  const createCard = (title, i18n) => {
+export const renderFeeds = (state, elements, i18n) => {
+  const { channelList, postsList } = state.feeds;
+  const { uiState } = state;
+
+  const createCard = (title) => {
     const card = createElement('div', {
       classList: ['card', 'border-0'],
     });
@@ -266,32 +182,101 @@ export const renderFeedsAndPostsLists = (state, elements, i18n) => {
     return card;
   };
 
-  // eslint-disable-next-line
-  const feedCard = createCard('elements.feeds', i18n);
-  const postCard = createCard('elements.posts', i18n);
-  // eslint-disable-next-line
-  const feedsList = renderFeedsList(state);
-  const postsList = state.feeds.channelList
-    .map(({ id }) => renderPostsList(state, elements, id, i18n));
+  const feedCard = createCard('elements.feeds');
+  const postCard = createCard('elements.posts');
+
+  const feedsList = createElement('ul', {
+    classList: ['list-group', 'border-0', 'rounded-0'],
+  });
+
+  const feeds = channelList.map(({ title, description }) => {
+    const feedLiElement = createElement('li', {
+      classList: ['list-group-item', 'border-0', 'border-end-0'],
+    });
+
+    const feedTitle = createElement('h3', {
+      textContent: title,
+      classList: ['h6', 'm-0'],
+    });
+
+    const feedDescription = createElement('p', {
+      textContent: description,
+      classList: ['m-0', 'small', 'text-black-50'],
+    });
+
+    feedLiElement.append(feedTitle, feedDescription);
+    return feedLiElement;
+  });
+
+  feedsList.append(...feeds);
+
+  const postsLists = channelList
+    .map(({ id }) => {
+      const postsToRender = postsList.filter(({ feedId }) => feedId === id);
+
+      const postsUlElement = createElement('ul', {
+        classList: ['list-group', 'border-0', 'rounded-0'],
+      });
+
+      // eslint-disable-next-line no-shadow
+      const posts = postsToRender.map(({ title, link, id }) => {
+        const postsLiElement = createElement('li', {
+          classList: [
+            'list-group-item',
+            'd-flex',
+            'justify-content-between',
+            'align-items-start',
+            'border-0',
+            'border-end-0',
+          ],
+        });
+
+        const postLinkClasses = uiState.viewedPostsIds.includes(id) ? ['fw-normal', 'link-secondary'] : ['fw-bold'];
+
+        const postLink = createElement('a', {
+          textContent: title,
+          classList: postLinkClasses,
+          attributeList: [
+            ['href', link],
+            ['id', id],
+            ['target', '_blank'],
+            ['rel', 'noopener noreferrer'],
+          ],
+        });
+
+        const postButton = createElement('button', {
+          textContent: i18n.t('buttons.viewBtn'),
+          classList: ['btn', 'btn-outline-primary', 'btn-sm'],
+          attributeList: [['type', 'button']],
+          dataSetList: [['id', id], ['bsToggle', 'modal'], ['bsTarget', '#modal']],
+        });
+
+        postsLiElement.append(postLink, postButton);
+        return postsLiElement;
+      });
+      postsUlElement.append(...posts);
+      return postsUlElement;
+    });
 
   elements.feedsDiv.replaceChildren(feedCard, feedsList);
-  elements.postsDiv.replaceChildren(postCard, ...postsList);
+  elements.postsDiv.replaceChildren(postCard, ...postsLists);
 };
 
-export const render = (state, elements, i18n) => {
-  const { process } = state.feeds;
+export const renderFormState = (state, elements, i18n) => {
+  const { process } = state.form;
+
   switch (process) {
-    case 'loading':
+    case 'initial':
+      renderFormElements(elements, i18n);
+      break;
+    case 'submitting':
       disableForm();
-      deleteFeedbackElement();
       break;
-    case 'loaded':
-      resetForm();
-      renderFeedsAndPostsLists(state, elements, i18n);
-      renderSuccessFeedbackElement(elements, i18n);
+    case 'submitted':
+      resetForm(i18n);
       break;
-    case 'updated':
-      renderFeedsAndPostsLists(state, elements, i18n);
+    case 'failed':
+      renderFormErrors(state, elements, i18n);
       break;
     default: break;
   }
