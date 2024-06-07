@@ -105,9 +105,7 @@ const startPostsUpdatingTimer = (watchedState, interval = 5000) => {
         watchedState.feeds.postsList.push(...newPosts);
         watchedState.feeds.process = 'updated';
       })
-      .catch((e) => {
-        console.error(e);
-      }));
+      .catch(() => {}));
 
     Promise.all(promises).finally(() => {
       timerID = setTimeout(updatePosts, interval);

@@ -36,20 +36,16 @@ const disableForm = () => {
   }
 };
 
-const enableForm = () => {
-  const input = document.querySelector('form input');
+const resetForm = (i18n, elements) => {
+  const input = document.querySelector('input');
   input.removeAttribute('readonly');
+  input.classList.remove('is-invalid');
+  input.focus();
 
   const formButton = document.querySelector('form button');
   formButton.removeAttribute('disabled');
-};
 
-const resetForm = (i18n) => {
-  enableForm();
-  const input = document.querySelector('input');
-  document.querySelector('form').reset();
-  input.classList.remove('is-invalid');
-  input.focus();
+  elements.form.reset();
 
   const currentFeedbackElement = document.querySelector('.feedback');
   currentFeedbackElement.classList.replace('text-danger', 'text-success');
@@ -122,10 +118,13 @@ const renderFormElements = (elements, i18n) => {
   formDiv.insertBefore(feedback, example.nextSibling);
 };
 const renderFormErrors = (state, elements, i18n) => {
-  enableForm();
-  const { error } = state.form;
-
   const input = document.querySelector('input');
+  input.removeAttribute('readonly');
+
+  const formButton = document.querySelector('form button');
+  formButton.removeAttribute('disabled');
+
+  const { error } = state.form;
 
   if (error.key !== 'errors.rssError') {
     input.classList.add('is-invalid');
@@ -273,7 +272,7 @@ export const renderFormState = (state, elements, i18n) => {
       disableForm();
       break;
     case 'submitted':
-      resetForm(i18n);
+      resetForm(i18n, elements);
       break;
     case 'failed':
       renderFormErrors(state, elements, i18n);
