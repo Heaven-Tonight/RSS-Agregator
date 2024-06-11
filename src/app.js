@@ -1,10 +1,11 @@
 import i18next from 'i18next';
 import * as yup from 'yup';
 import axios from 'axios';
-import { uniqueId } from 'lodash';
+import { uniqueId, differenceWith } from 'lodash';
 
-import watch from './view/view.js';
+import watch from './view.js';
 import resources from './locales/index.js';
+import parseXML from './parseXML.js';
 
 const elements = {
   formDiv: document.querySelector('.form-wrapper'),
@@ -21,32 +22,6 @@ const elements = {
 const defaultLanguage = 'ru';
 
 let timerID;
-
-const parseXML = (data) => {
-  const domParser = new DOMParser();
-  const dom = domParser.parseFromString(data.contents, 'application/xml');
-
-  const parserError = dom.querySelector('parsererror');
-
-  if (parserError) {
-    throw new Error('invalid RSS');
-  }
-
-  const getTextContent = (element, selector) => element.querySelector(selector).textContent;
-
-  const feed = {
-    title: getTextContent(dom, 'title'),
-    description: getTextContent(dom, 'description'),
-  };
-
-  const posts = Array.from(dom.querySelectorAll('item')).map((item) => ({
-    title: getTextContent(item, 'title'),
-    description: getTextContent(item, 'description'),
-    link: getTextContent(item, 'link'),
-  }));
-
-  return { feed, posts };
-};
 
 const loadFeedsData = (url, feedId) => axios
   .get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
@@ -81,11 +56,16 @@ const updateFeedsState = (watchedState, url, feedId) => {
     .catch((err) => {
       if (err.isAxiosError) {
         watchedState.form.error = { key: 'errors.networkError' };
-      } else if (err.message === 'invalid RSS') {
-        watchedState.form.error = { key: 'errors.rssError' };
-      } else {
-        watchedState.form.error = { key: 'errors.unknownError' };
+        watchedState.form.process = 'failed';
+        return;
       }
+
+      if (err.message === 'invalid RSS') {
+        watchedState.form.error = { key: 'errors.rssError' };
+        watchedState.form.process = 'failed';
+        return;
+      }
+      watchedState.form.error = { key: 'errors.unknownError' };
       watchedState.form.process = 'failed';
     });
 };
@@ -97,15 +77,18 @@ const startPostsUpdatingTimer = (watchedState, interval = 5000) => {
 
     const promises = channelList.map(({ url, id }) => loadFeedsData(url, id)
       .then(({ posts, feed }) => {
-        const currentTitles = postsList
+        const compareTitles = (post, title) => post.title === title;
+
+        const currentPostsTitles = postsList
           .filter((post) => post.feedId === feed.id)
           .map(({ title }) => title);
-        const newPosts = posts
-          .filter(({ title }) => !currentTitles.includes(title));
+
+        const newPosts = differenceWith(posts, currentPostsTitles, compareTitles);
+
         watchedState.feeds.postsList.push(...newPosts);
         watchedState.feeds.process = 'updated';
       })
-      .catch(() => {}));
+      .catch((error) => console.log(error)));
 
     Promise.all(promises).finally(() => {
       timerID = setTimeout(updatePosts, interval);
