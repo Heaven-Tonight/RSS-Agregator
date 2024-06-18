@@ -20,7 +20,7 @@ Start [reading](https://frontend-project-11-omega-lake.vercel.app/) RSS.
 
 Clone the project using the web URL: 
 
-```git clone https://github.com/Heaven-Tonight/RSS-Agregator.git```
+```git clone https://github.com/mad-chameleon/RSS-Agregator.git```
 
 
 1. Run ```npm install``` to install dependencies.
